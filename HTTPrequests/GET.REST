@@ -1,0 +1,6 @@
+GET http://localhost:3003/api/blogs
+Accept: application/json
+
+###
+GET http://localhost:3003/
+Accept: application/json

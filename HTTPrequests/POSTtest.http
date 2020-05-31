@@ -1,0 +1,11 @@
+POST http://localhost:3003/api/blogs
+Content-Type: application/json
+
+{
+  "title": "Hola3",
+  "author": "MongoDB & WebService 2",
+  "url": "http:localhost:3003/api/blogs/whoknows",
+  "likes": "10"
+}
+
+###
