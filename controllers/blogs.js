@@ -4,13 +4,9 @@ const Blog = require('../models/blog');
 // get all blogs
 
 blogRouter.get('/', (request, response) => {
-
-  debugger
-  Blog
-    .find({ })
-    .then((blogs) => {
-      response.json(blogs);
-    });
+  Blog.find({}).then((blogs) => {
+    response.json(blogs);
+  });
 });
 
 // post a blog
@@ -36,4 +32,3 @@ blogRouter.post('/', (request, response, next) => {
 });
 
 module.exports = blogRouter;
-

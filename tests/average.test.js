@@ -1,4 +1,4 @@
-import {describe, expect, test} from '@jest/globals';
+import { describe, expect, test } from '@jest/globals';
 
 const average = require('../utils/for_testing').average();
 
@@ -15,4 +15,3 @@ describe('average', () => {
     expect(average([])).toBe(0);
   });
 });
-

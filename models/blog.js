@@ -14,16 +14,12 @@ const blogSchema = mongoose.Schema({
 blogSchema.plugin(uniqueValidator, { type: 'mongoose-unique-validator' });
 
 blogSchema.set('toJSON', {
-
   transform: (document, returnedBlog) => {
     returnedBlog.id = returnedBlog._id.toString();
 
     delete returnedBlog._id;
     delete returnedBlog.__v;
-  }
+  },
 });
 
 module.exports = mongoose.model('Blog', blogSchema);
-
-
-
