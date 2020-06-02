@@ -29,15 +29,42 @@ describe(' Most Likes ', () => {
       __v: 0,
     },
     {
-      title: 'Canonical string reduction',
+      _id: '5a422aa71b54a676234d11234',
+      title: 'Edward 2',
       author: 'Edsger W. Dijkstra',
+      url: 'http://www.u.arizona.edu/~rubinson/copyright_violations/Go_To_Considered_Harmful.html',
+      likes: 10,
+      __v: 0,
+    },
+    {
+      title: 'Testing bro.',
+      author: 'Benizio Mauritez',
       likes: 12,
+    },
+    {
+      _id: '5a422aa71b54a676234d17f3',
+      title: 'XD TEST',
+      author: 'Benizio Mauritez',
+      url: 'http://www.u.arizona.edu/~rubinson/copyright_violations/Go_To_Considered_Harmful.html',
+      likes: 8,
+      __v: 0,
     },
   ];
 
   test('finds most liked blog in total blogs', () => {
-    const result = blogs[1];
+    const result = blogs[2];
     const test = listHelperTest.favoriteBlog(blogs);
+
+    expect(test).toEqual(result);
+  });
+
+  test(' when receiving an array of blogs, it returns the author with most likes on the array: ', () => {
+    const result = {
+      author: 'Benizio Mauritez',
+      likes: 20,
+    };
+
+    const test = listHelperTest.mostLikes(blogs);
 
     expect(test).toEqual(result);
   });
