@@ -17,6 +17,7 @@ beforeEach(async () => {
 
   logger.info('done');
 });
+
 describe(' Checks for when we are doing a GET request to get the full blogs ', () => {
   test('blogs are returned as json', async () => {
     await api
