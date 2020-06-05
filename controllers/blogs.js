@@ -8,9 +8,22 @@ blogRouter.get('/', async (request, response) => {
   response.json(blogs.map((blog) => blog.toJSON()));
 });
 
+// get a blog by id
+
+blogRouter.get('/:id', async (request, response, next) => {
+  const blog = await Blog.findById(request.params.id);
+
+  if (blog) {
+    response.json(blog.toJSON());
+  } else {
+    response.status(404).end();
+  }
+});
+
 // post a blog
 
-blogRouter.post('/', (request, response, next) => {
+// eslint-disable-next-line consistent-return
+blogRouter.post('/', async (request, response, next) => {
   const { body } = request;
 
   if (!body || !body.title || !body.author || !body.url) {
@@ -21,13 +34,18 @@ blogRouter.post('/', (request, response, next) => {
     title: body.title,
     author: body.author,
     url: body.url,
-    likes: body.likes,
+    likes: body.likes || 0,
   });
 
-  newBlog
-    .save()
-    .then((returnedBlog) => response.json(returnedBlog.toJSON()))
-    .catch((error) => next(error));
+  const savedBlog = await newBlog.save();
+  response.json(savedBlog.toJSON());
+});
+
+// delete a note
+
+blogRouter.delete('/:id', async (request, response, next) => {
+  await Blog.findByIdAndRemove(request.params.id);
+  response.status(204).end();
 });
 
 module.exports = blogRouter;

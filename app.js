@@ -1,12 +1,15 @@
-const config = require('./utils/config');
 const express = require('express');
+const config = require('./utils/config');
+require('express-async-errors');
 
 const app = express();
+// eslint-disable-next-line import/order
 const cors = require('cors');
 const blogRouter = require('./controllers/blogs');
 const middleware = require('./utils/middleware');
 const logger = require('./utils/logger');
 
+// eslint-disable-next-line import/order
 const mongoose = require('mongoose');
 
 logger.info('Connecting to: ', config.MONGODB_URI);

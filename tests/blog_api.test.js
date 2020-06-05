@@ -70,6 +70,34 @@ test('blog without title or author is not added.', async () => {
   expect(blogs).toHaveLength(helper.initialBlogs.length);
 });
 
+test('a specific blog can be viewed', async () => {
+  const blogs = await helper.queryAllBlogs();
+
+  const blogToView = blogs[0];
+
+  const fetchedBlog = await api
+    .get(`/api/blogs/${blogToView.id}`)
+    .expect(200)
+    .expect('Content-Type', /application\/json/);
+
+  expect(fetchedBlog.body).toEqual(blogToView);
+});
+
+test('a specific note can be deleted', async () => {
+  const blogs = await helper.queryAllBlogs();
+  const blogToDelete = blogs[0];
+
+  await api.delete(`/api/blogs/${blogToDelete.id}`).expect(204);
+
+  const blogsAfterDelete = await helper.queryAllBlogs();
+
+  expect(blogsAfterDelete).toHaveLength(helper.initialBlogs.length - 1);
+
+  const titles = blogsAfterDelete.map((blog) => blog.title);
+
+  expect(titles).not.toContain(blogToDelete.title);
+});
+
 afterAll(() => {
   mongoose.connection.close();
 });
