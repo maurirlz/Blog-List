@@ -17,107 +17,113 @@ beforeEach(async () => {
 
   logger.info('done');
 });
+describe(' Checks for when we are doing a GET request to get the full blogs ', () => {
+  test('blogs are returned as json', async () => {
+    await api
+      .get('/api/blogs')
+      .expect(200)
+      .expect('Content-Type', /application\/json/);
+  });
 
-test('blogs are returned as json', async () => {
-  await api
-    .get('/api/blogs')
-    .expect(200)
-    .expect('Content-Type', /application\/json/);
+  test('all blogs are returned', async () => {
+    const response = await api.get('/api/blogs');
+
+    expect(response.body).toHaveLength(helper.initialBlogs.length);
+  });
 });
 
-test('all blogs are returned', async () => {
-  const response = await api.get('/api/blogs');
+describe('Searching an specific attribute for blogs', () => {
+  test('a specific title is within the returned blogs', async () => {
+    const response = await api.get('/api/blogs');
 
-  expect(response.body).toHaveLength(helper.initialBlogs.length);
+    const titles = response.body.map((blog) => blog.title);
+
+    expect(titles).toContain('HTML is not easy');
+  });
+  test('it exist a property named id in the database.', async () => {
+    const blogs = await helper.queryAllBlogs();
+
+    expect(blogs[0].id).toBeDefined();
+  });
 });
 
-test('a specific title is within the returned blogs', async () => {
-  const response = await api.get('/api/blogs');
+describe('Adding a blog to the database', () => {
+  test('a valid blog can be added', async () => {
+    const newBlog = {
+      title: 'async/await simplifies making async calls.',
+      author: 'Benitez Mauricio',
+      url: 'benjamin.com',
+      likes: '50',
+    };
 
-  const titles = response.body.map((blog) => blog.title);
+    await api
+      .post('/api/blogs')
+      .send(newBlog)
+      .expect(200)
+      .expect('Content-Type', /application\/json/);
 
-  expect(titles).toContain('HTML is not easy');
+    const response = await helper.queryAllBlogs();
+    expect(response).toHaveLength(helper.initialBlogs.length + 1);
+
+    const blogTitles = response.map((blog) => blog.title);
+    expect(blogTitles).toContain('async/await simplifies making async calls.');
+  });
+
+  test('a blog without title or author cannot be added.', async () => {
+    const newBlog = {
+      likes: 5,
+    };
+
+    await api.post('/api/blogs').send(newBlog).expect(400);
+
+    const blogs = await helper.queryAllBlogs();
+
+    expect(blogs).toHaveLength(helper.initialBlogs.length);
+  });
+
+  test('When sending a blog without the property likes defined, it defaults to 0', async () => {
+    const newBlog = {
+      title: 'Likes defaulting to 0',
+      author: 'Benizio Mauritez',
+      url: 'localhost:3003/api/blogs',
+    };
+    await api.post('/api/blogs').send(newBlog).expect(200);
+
+    const blogs = await helper.queryAllBlogs();
+
+    const foundBlog = blogs.find((blog) => blog.title === 'Likes defaulting to 0');
+    expect(foundBlog.likes).toBe(0);
+  });
 });
 
-test('a valid blog can be added', async () => {
-  const newBlog = {
-    title: 'async/await simplifies making async calls.',
-    author: 'Benitez Mauricio',
-    url: 'benjamin.com',
-    likes: '50',
-  };
+describe(' Querying the database ', () => {
+  test('a specific blog can be viewed', async () => {
+    const blogs = await helper.queryAllBlogs();
 
-  await api
-    .post('/api/blogs')
-    .send(newBlog)
-    .expect(200)
-    .expect('Content-Type', /application\/json/);
+    const blogToView = blogs[0];
 
-  const response = await helper.queryAllBlogs();
-  expect(response).toHaveLength(helper.initialBlogs.length + 1);
+    const fetchedBlog = await api
+      .get(`/api/blogs/${blogToView.id}`)
+      .expect(200)
+      .expect('Content-Type', /application\/json/);
 
-  const blogTitles = response.map((blog) => blog.title);
-  expect(blogTitles).toContain('async/await simplifies making async calls.');
-});
+    expect(fetchedBlog.body).toEqual(blogToView);
+  });
 
-test('a blog without title or author cannot be added.', async () => {
-  const newBlog = {
-    likes: 5,
-  };
+  test('a specific blog can be deleted', async () => {
+    const blogs = await helper.queryAllBlogs();
+    const blogToDelete = blogs[0];
 
-  await api.post('/api/blogs').send(newBlog).expect(400);
+    await api.delete(`/api/blogs/${blogToDelete.id}`).expect(204);
 
-  const blogs = await helper.queryAllBlogs();
+    const blogsAfterDelete = await helper.queryAllBlogs();
 
-  expect(blogs).toHaveLength(helper.initialBlogs.length);
-});
+    expect(blogsAfterDelete).toHaveLength(helper.initialBlogs.length - 1);
 
-test('a specific blog can be viewed', async () => {
-  const blogs = await helper.queryAllBlogs();
+    const titles = blogsAfterDelete.map((blog) => blog.title);
 
-  const blogToView = blogs[0];
-
-  const fetchedBlog = await api
-    .get(`/api/blogs/${blogToView.id}`)
-    .expect(200)
-    .expect('Content-Type', /application\/json/);
-
-  expect(fetchedBlog.body).toEqual(blogToView);
-});
-
-test('a specific note can be deleted', async () => {
-  const blogs = await helper.queryAllBlogs();
-  const blogToDelete = blogs[0];
-
-  await api.delete(`/api/blogs/${blogToDelete.id}`).expect(204);
-
-  const blogsAfterDelete = await helper.queryAllBlogs();
-
-  expect(blogsAfterDelete).toHaveLength(helper.initialBlogs.length - 1);
-
-  const titles = blogsAfterDelete.map((blog) => blog.title);
-
-  expect(titles).not.toContain(blogToDelete.title);
-});
-
-test('it exist a property named id in the database.', async () => {
-  const blogs = await helper.queryAllBlogs();
-
-  expect(blogs[0].id).toBeDefined();
-});
-
-test('When sending a blog without the property likes defined, it defaults to 0', async () => {
-  const newBlog = {
-    title: 'Likes defaulting to 0',
-    author: 'Benizio Mauritez',
-    url: 'localhost:3003/api/blogs',
-  };
-  await api.post('/api/blogs').send(newBlog).expect(200);
-
-  const blogs = await helper.queryAllBlogs();
-
-  const foundBlog = blogs.find((blog) => blog.title === 'Likes defaulting to 0');
-  expect(foundBlog.likes).toBe(0);
+    expect(titles).not.toContain(blogToDelete.title);
+  });
 });
 
 afterAll(() => {
