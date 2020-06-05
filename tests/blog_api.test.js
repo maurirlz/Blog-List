@@ -3,17 +3,19 @@ const supertest = require('supertest');
 const helper = require('./test_helper');
 const app = require('../app');
 const Blog = require('../models/blog');
+const logger = require('../utils/logger');
 
 const api = supertest(app);
 
 beforeEach(async () => {
   await Blog.deleteMany({});
+  logger.info('cleared');
 
-  let blogObject = new Blog(helper.initialBlogs[0]);
-  await blogObject.save();
+  const blogObjects = helper.initialBlogs.map((blog) => new Blog(blog));
+  const promiseArray = blogObjects.map((blog) => blog.save());
+  const result = await Promise.all(promiseArray);
 
-  blogObject = new Blog(helper.initialBlogs[1]);
-  await blogObject.save();
+  logger.info('done');
 });
 
 test('blogs are returned as json', async () => {
@@ -58,7 +60,7 @@ test('a valid blog can be added', async () => {
   expect(blogTitles).toContain('async/await simplifies making async calls.');
 });
 
-test('blog without title or author is not added.', async () => {
+test('a blog without title or author cannot be added.', async () => {
   const newBlog = {
     likes: 5,
   };
@@ -96,6 +98,26 @@ test('a specific note can be deleted', async () => {
   const titles = blogsAfterDelete.map((blog) => blog.title);
 
   expect(titles).not.toContain(blogToDelete.title);
+});
+
+test('it exist a property named id in the database.', async () => {
+  const blogs = await helper.queryAllBlogs();
+
+  expect(blogs[0].id).toBeDefined();
+});
+
+test('When sending a blog without the property likes defined, it defaults to 0', async () => {
+  const newBlog = {
+    title: 'Likes defaulting to 0',
+    author: 'Benizio Mauritez',
+    url: 'localhost:3003/api/blogs',
+  };
+  await api.post('/api/blogs').send(newBlog).expect(200);
+
+  const blogs = await helper.queryAllBlogs();
+
+  const foundBlog = blogs.find((blog) => blog.title === 'Likes defaulting to 0');
+  expect(foundBlog.likes).toBe(0);
 });
 
 afterAll(() => {
