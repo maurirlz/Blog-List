@@ -3,10 +3,9 @@ const Blog = require('../models/blog');
 
 // get all blogs
 
-blogRouter.get('/', (request, response) => {
-  Blog.find({}).then((blogs) => {
-    response.json(blogs);
-  });
+blogRouter.get('/', async (request, response) => {
+  const blogs = await Blog.find({});
+  response.json(blogs.map((blog) => blog.toJSON()));
 });
 
 // post a blog
@@ -14,7 +13,7 @@ blogRouter.get('/', (request, response) => {
 blogRouter.post('/', (request, response, next) => {
   const { body } = request;
 
-  if (!body) {
+  if (!body || !body.title || !body.author || !body.url) {
     return response.status(400).json({ error: 'Malformatted blog' });
   }
 
