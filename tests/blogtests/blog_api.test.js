@@ -4,6 +4,7 @@ const helper = require('../test_helper');
 const userHelper = require('../usertests/user_helper');
 const app = require('../../app');
 const Blog = require('../../models/blog');
+const User = require('../../models/user');
 const logger = require('../../utils/logger');
 
 const api = supertest(app);
@@ -151,6 +152,26 @@ describe('User Integration with blogs', () => {
     const secondBlogTest = blogs[1];
 
     expect(secondBlogTest.user.toString()).toMatch(secondUserTest.id.toString());
+  });
+
+  test("After adding a new blog, querying a user's blog count reflex the added blog in it's ids.", async () => {
+    const newBlog = {
+      title: 'Test blog',
+      author: 'Mauricio E. Benitez',
+      url: 'someurl.com',
+      user: '5ee1db3d0b64eb67a024fbff',
+    };
+
+    await api.post('/api/blogs').send(newBlog).expect(200);
+
+    const blogs = await helper.queryAllBlogs();
+    const addedBlogId = blogs.find((blog) => blog.title === 'Test blog').id;
+    const testUser = await User.findById('5ee1db3d0b64eb67a024fbff');
+    const testUserBlogs = testUser.blogs;
+
+    const foundBlog = testUserBlogs.find((blog) => blog.toString() === addedBlogId.toString());
+
+    expect(foundBlog).toBeDefined();
   });
 });
 

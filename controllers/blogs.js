@@ -44,6 +44,7 @@ blogRouter.post('/', async (request, response, next) => {
 
   const savedBlog = await newBlog.save();
   foundUser.blogs = foundUser.blogs.concat(savedBlog._id);
+  await foundUser.save();
   response.json(savedBlog.toJSON());
 });
 
