@@ -16,6 +16,9 @@ const errorHandler = (error, request, response, next) => {
 
   // poner errores que me van saliendo de las diferentes request que hago en controller
 
+  if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: 'Malformatted user request' });
+  }
   next(error);
 };
 

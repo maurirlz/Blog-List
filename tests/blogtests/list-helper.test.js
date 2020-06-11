@@ -1,4 +1,4 @@
-const listHelperTest = require('../utils/listHelper');
+const listHelperTest = require('../../utils/listHelper');
 
 describe(' total likes ', () => {
   const listWithOneBlog = [

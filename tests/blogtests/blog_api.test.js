@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 const supertest = require('supertest');
-const helper = require('./test_helper');
-const app = require('../app');
-const Blog = require('../models/blog');
-const logger = require('../utils/logger');
+const helper = require('../test_helper');
+const app = require('../../app');
+const Blog = require('../../models/blog');
+const logger = require('../../utils/logger');
 
 const api = supertest(app);
 
