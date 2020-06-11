@@ -6,7 +6,12 @@ const User = require('../models/user');
 const logger = require('../utils/logger');
 
 userRouter.get('/', async (request, response) => {
-  const returnedUsers = await User.find({});
+  const returnedUsers = await User.find({}).populate('blogs', {
+    url: 1,
+    title: 1,
+    author: 1,
+    id: 1,
+  });
   // eslint-disable-next-line no-undef
   response.json(returnedUsers.map((user) => user.toJSON()));
 });
@@ -29,9 +34,15 @@ userRouter.post('/', async (request, response, next) => {
 
   const savedUser = await user.save();
 
-  logger.info(savedUser);
+  response.json(savedUser);
+});
 
-  response.json(savedUser.toJSON());
+userRouter.delete('/:id', async (request, response) => {
+  const { id } = request.params;
+
+  await User.findByIdAndRemove(id);
+
+  response.status(204).end();
 });
 
 module.exports = userRouter;

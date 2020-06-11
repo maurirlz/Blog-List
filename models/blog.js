@@ -5,13 +5,29 @@ mongoose.set('useFindAndModify', false);
 mongoose.set('useCreateIndex', true);
 
 const blogSchema = mongoose.Schema({
-  title: String,
-  author: String,
+  title: {
+    type: String,
+    required: true,
+    minlength: 4,
+    maxlength: 90,
+  },
+  author: {
+    type: String,
+    minlength: 4,
+    maxlength: 25,
+  },
   url: String,
-  likes: Number,
+  likes: {
+    type: Number,
+    default: 0,
+  },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  },
 });
 
-blogSchema.plugin(uniqueValidator, { type: 'mongoose-unique-validator' });
+blogSchema.plugin(uniqueValidator);
 
 blogSchema.set('toJSON', {
   transform: (document, returnedBlog) => {

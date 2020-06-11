@@ -1,4 +1,7 @@
 const Blog = require('../models/blog');
+const userHelper = require('./usertests/user_helper');
+
+const users = userHelper.getUsersInDatabase();
 
 const initialBlogs = [
   {
@@ -6,15 +9,16 @@ const initialBlogs = [
     author: 'Benitez Mauricio',
     url: 'somesite.com',
     likes: 5,
+    user: '5ee1cb9ac57df155b05f11c0',
   },
   {
     title: 'HTML is not easy',
-    author: 'Benizio Mauritez',
+    author: 'Benizio E. Mauritez',
     url: 'someurl.com',
     likes: 10,
+    user: '5ee1cb9ac57df155b05f11c1',
   },
 ];
-
 
 const nonExistingId = async () => {
   const blog = new Blog({ title: 'will remove this blog soon. ' });

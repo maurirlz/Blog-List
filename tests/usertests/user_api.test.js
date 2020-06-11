@@ -65,6 +65,16 @@ describe('Users in database', () => {
 
     await api.post('/api/users').send(invalidPasswordUser).expect(400);
   });
+
+  test('When sending an already existing username, server returns 400 bad request.', async () => {
+    const newUser = {
+      username: 'maurirlz',
+      name: 'mauri',
+      password: 'test',
+    };
+
+    api.post('/api/users').send(newUser).expect(400);
+  });
 });
 
 afterAll(() => {

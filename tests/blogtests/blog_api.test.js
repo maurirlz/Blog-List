@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const supertest = require('supertest');
 const helper = require('../test_helper');
+const userHelper = require('../usertests/user_helper');
 const app = require('../../app');
 const Blog = require('../../models/blog');
 const logger = require('../../utils/logger');
@@ -124,6 +125,32 @@ describe(' Querying the database ', () => {
     const titles = blogsAfterDelete.map((blog) => blog.title);
 
     expect(titles).not.toContain(blogToDelete.title);
+  });
+});
+
+describe('User Integration with blogs', () => {
+  test("A returned blog contains it's authors id.", async () => {
+    const testBlog = helper.initialBlogs[0];
+    const blogs = await helper.queryAllBlogs();
+    const { user } = testBlog;
+    const returnedBlogUser = blogs[0].user;
+
+    expect(user).toMatch(returnedBlogUser.toString());
+  });
+
+  test("When 2 users in database, each user has it's corresponding reference to the proper blog they created", async () => {
+    const users = await userHelper.getUsersInDatabase();
+    const blogs = await helper.queryAllBlogs();
+
+    const firstUserTest = users[0];
+    const firstBlogTest = blogs[0];
+
+    expect(firstBlogTest.user.toString()).toMatch(firstUserTest.id.toString());
+
+    const secondUserTest = users[1];
+    const secondBlogTest = blogs[1];
+
+    expect(secondBlogTest.user.toString()).toMatch(secondUserTest.id.toString());
   });
 });
 

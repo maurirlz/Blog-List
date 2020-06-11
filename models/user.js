@@ -22,9 +22,15 @@ const userSchema = mongoose.Schema({
   passwordHash: {
     type: String,
   },
+  blogs: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Blog',
+    },
+  ],
 });
 
-mongoose.plugin(uniqueValidator, { type: 'mongoose-unique-validator' });
+mongoose.plugin(uniqueValidator);
 
 userSchema.set('toJSON', {
   transform: (document, returnedUser) => {

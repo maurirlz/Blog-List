@@ -9,6 +9,7 @@ describe(' total likes ', () => {
       url: 'http://www.u.arizona.edu/~rubinson/copyright_violations/Go_To_Considered_Harmful.html',
       likes: 5,
       __v: 0,
+      user: '5ee1b1940c9b6b39ca1407de',
     },
   ];
 
