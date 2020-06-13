@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const supertest = require('supertest');
+const jwt = require('jsonwebtoken');
 const helper = require('../test_helper');
 const userHelper = require('../usertests/user_helper');
 const app = require('../../app');
@@ -11,11 +12,16 @@ const api = supertest(app);
 
 beforeEach(async () => {
   await Blog.deleteMany({});
+  await User.deleteMany({});
   logger.info('cleared');
+
+  await userHelper.initialUsers.map(async (user) => {
+    await api.post('/api/users').send(user);
+  });
 
   const blogObjects = helper.initialBlogs.map((blog) => new Blog(blog));
   const promiseArray = blogObjects.map((blog) => blog.save());
-  const result = await Promise.all(promiseArray);
+  await Promise.all(promiseArray);
 
   logger.info('done');
 });
@@ -52,15 +58,25 @@ describe('Searching an specific attribute for blogs', () => {
 
 describe('Adding a blog to the database', () => {
   test('a valid blog can be added', async () => {
+    const postUser = await api.post('/api/login').send({
+      username: 'fabrirlz',
+      password: 'root',
+    });
+
+    const { token } = postUser.body;
+    const user = jwt.verify(token, process.env.SECRET);
+
     const newBlog = {
       title: 'async/await simplifies making async calls.',
       author: 'Benitez Mauricio',
       url: 'benjamin.com',
       likes: '50',
+      user: `${user.id}`,
     };
 
     await api
       .post('/api/blogs')
+      .set('Authorization', `bearer ${token}`)
       .send(newBlog)
       .expect(200)
       .expect('Content-Type', /application\/json/);
@@ -73,11 +89,20 @@ describe('Adding a blog to the database', () => {
   });
 
   test('a blog without title or author cannot be added.', async () => {
+    const postUser = await api.post('/api/login').send({
+      username: 'fabrirlz',
+      password: 'root',
+    });
+
+    const { token } = postUser.body;
+    const user = jwt.verify(token, process.env.SECRET);
+
     const newBlog = {
       likes: 5,
+      user: `${user.id}`,
     };
 
-    await api.post('/api/blogs').send(newBlog).expect(400);
+    await api.post('/api/blogs').set('Authorization', `bearer ${token}`).send(newBlog).expect(400);
 
     const blogs = await helper.queryAllBlogs();
 
@@ -85,12 +110,22 @@ describe('Adding a blog to the database', () => {
   });
 
   test('When sending a blog without the property likes defined, it defaults to 0', async () => {
+    const postUser = await api.post('/api/login').send({
+      username: 'fabrirlz',
+      password: 'root',
+    });
+
+    const { token } = postUser.body;
+    const user = jwt.verify(token, process.env.SECRET);
+
     const newBlog = {
       title: 'Likes defaulting to 0',
       author: 'Benizio Mauritez',
       url: 'localhost:3003/api/blogs',
+      user: `${user.id}`,
     };
-    await api.post('/api/blogs').send(newBlog).expect(200);
+
+    await api.post('/api/blogs').set('Authorization', `bearer ${token}`).send(newBlog).expect(200);
 
     const blogs = await helper.queryAllBlogs();
 
@@ -103,7 +138,10 @@ describe(' Querying the database ', () => {
   test('a specific blog can be viewed', async () => {
     const blogs = await helper.queryAllBlogs();
 
-    const blogToView = blogs[0];
+    const blogToView = {
+      ...blogs[0],
+      user: null,
+    };
 
     const fetchedBlog = await api
       .get(`/api/blogs/${blogToView.id}`)
@@ -113,15 +151,35 @@ describe(' Querying the database ', () => {
     expect(fetchedBlog.body).toEqual(blogToView);
   });
 
-  test('a specific blog can be deleted', async () => {
-    const blogs = await helper.queryAllBlogs();
-    const blogToDelete = blogs[0];
+  test('a specific blog can be deleted by its creator', async () => {
+    const response = await api.post('/api/login').send({
+      username: 'fabrirlz',
+      password: 'root',
+    });
 
-    await api.delete(`/api/blogs/${blogToDelete.id}`).expect(204);
+    const { token } = response.body;
+    const user = jwt.verify(token, process.env.SECRET);
+
+    const newBlog = {
+      title: 'Test blog',
+      author: 'Mauricio E. Benitez',
+      url: 'someurl.com',
+      user: `${user.id}`,
+    };
+
+    await api.post('/api/blogs').set('Authorization', `bearer ${token}`).send(newBlog).expect(200);
+
+    const initialBlogs = await helper.queryAllBlogs();
+
+    const blogToDelete = await Blog.findOne({ title: 'Test blog', user: `${user.id}` });
+
+    await api
+      .delete(`/api/blogs/${blogToDelete.id}`)
+      .set('Authorization', `bearer ${token}`)
+      .expect(204);
 
     const blogsAfterDelete = await helper.queryAllBlogs();
-
-    expect(blogsAfterDelete).toHaveLength(helper.initialBlogs.length - 1);
+    expect(blogsAfterDelete).toHaveLength(initialBlogs.length - 1);
 
     const titles = blogsAfterDelete.map((blog) => blog.title);
 
@@ -130,31 +188,37 @@ describe(' Querying the database ', () => {
 });
 
 describe('User Integration with blogs', () => {
-  test("A returned blog contains it's authors id.", async () => {
-    const testBlog = helper.initialBlogs[0];
-    const blogs = await helper.queryAllBlogs();
-    const { user } = testBlog;
-    const returnedBlogUser = blogs[0].user;
-
-    expect(user).toMatch(returnedBlogUser.toString());
-  });
-
-  test("When 2 users in database, each user has it's corresponding reference to the proper blog they created", async () => {
-    const users = await userHelper.getUsersInDatabase();
-    const blogs = await helper.queryAllBlogs();
-
-    const firstUserTest = users[0];
-    const firstBlogTest = blogs[0];
-
-    expect(firstBlogTest.user.toString()).toMatch(firstUserTest.id.toString());
-
-    const secondUserTest = users[1];
-    const secondBlogTest = blogs[1];
-
-    expect(secondBlogTest.user.toString()).toMatch(secondUserTest.id.toString());
-  });
-
   test("After adding a new blog, querying a user's blog count reflex the added blog in it's ids.", async () => {
+    const response = await api.post('/api/login').send({
+      username: 'fabrirlz',
+      password: 'root',
+    });
+
+    const { token } = response.body;
+    const user = jwt.verify(token, process.env.SECRET);
+
+    const newBlog = {
+      title: 'Test blog',
+      author: 'Mauricio E. Benitez',
+      url: 'someurl.com',
+      user: `${user.id}`,
+    };
+
+    await api.post('/api/blogs').set('Authorization', `bearer ${token}`).send(newBlog).expect(200);
+
+    const blogs = await helper.queryAllBlogs();
+    const addedBlogId = blogs.find((blog) => blog.title === 'Test blog').id;
+    const testUser = await User.findById(`${user.id}`);
+    const testUserBlogs = testUser.blogs;
+
+    const foundBlog = testUserBlogs.find((blog) => blog.toString() === addedBlogId.toString());
+
+    expect(foundBlog).toBeDefined();
+  });
+
+  test('Before not logging in, it is only possible to post a blog if user is logged in (Identified by a token.)', async () => {
+    const initialBlogs = await helper.queryAllBlogs();
+
     const newBlog = {
       title: 'Test blog',
       author: 'Mauricio E. Benitez',
@@ -162,16 +226,18 @@ describe('User Integration with blogs', () => {
       user: '5ee1db3d0b64eb67a024fbff',
     };
 
-    await api.post('/api/blogs').send(newBlog).expect(200);
+    await api.post('/api/blogs').send(newBlog).expect(403);
 
+    expect(initialBlogs).toHaveLength(initialBlogs.length);
+  });
+
+  test("With invalid user logged in, it is not possible to delete a post that it wasn't created by said user", async () => {
     const blogs = await helper.queryAllBlogs();
-    const addedBlogId = blogs.find((blog) => blog.title === 'Test blog').id;
-    const testUser = await User.findById('5ee1db3d0b64eb67a024fbff');
-    const testUserBlogs = testUser.blogs;
+    const blogToDelete = blogs[0];
 
-    const foundBlog = testUserBlogs.find((blog) => blog.toString() === addedBlogId.toString());
+    await api.delete(`/api/blogs/${blogToDelete.id}`).expect(403);
 
-    expect(foundBlog).toBeDefined();
+    expect(blogs).toHaveLength(blogs.length);
   });
 });
 

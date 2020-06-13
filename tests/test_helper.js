@@ -1,5 +1,4 @@
 const Blog = require('../models/blog');
-const userHelper = require('./usertests/user_helper');
 
 const initialBlogs = [
   {

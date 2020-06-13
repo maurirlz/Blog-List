@@ -9,12 +9,11 @@ const api = supertest(app);
 
 beforeEach(async () => {
   await User.deleteMany({});
-  logger.info('cleared users');
+  logger.info('cleared');
 
-  const users = helper.initialUsers.map((user) => new User(user));
-  const promises = users.map((user) => user.save());
-
-  await Promise.all(promises);
+  await helper.initialUsers.map(async (user) => {
+    await api.post('/api/users').send(user);
+  });
 });
 
 describe('Users in database', () => {

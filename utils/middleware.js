@@ -13,7 +13,7 @@ const unknownEndpoint = (request, response) => {
 };
 
 const errorHandler = (error, request, response, next) => {
-  logger.error(error.message);
+  logger.error(error);
 
   // poner errores que me van saliendo de las diferentes request que hago en controller
 
@@ -23,11 +23,27 @@ const errorHandler = (error, request, response, next) => {
   if (error.name === 'ValidationError') {
     return response.status(400).json({ error: 'Malformatted user request' });
   }
+  if (error.name === 'JsonWebTokenError') {
+    return response.status(403).json({ error: 'invalid token, unauthorized.' });
+  }
   next(error);
+};
+
+const tokenExtractor = (request, response, next) => {
+  const authorization = request.get('authorization') || null;
+
+  if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
+    request.token = authorization.substring(7);
+  } else {
+    request.token = null;
+  }
+
+  next();
 };
 
 module.exports = {
   requestLogger,
   unknownEndpoint,
   errorHandler,
+  tokenExtractor,
 };

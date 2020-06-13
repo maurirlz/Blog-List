@@ -2,15 +2,15 @@ const User = require('../../models/user');
 
 const initialUsers = [
   {
-    username: 'maurirlz',
-    name: 'Mauricio E. Benitez',
+    username: 'fabrirlz',
+    name: 'Fabricio',
     password: 'root',
   },
   {
-    username: 'beniziorlz',
-    name: 'Benizio E. Mauritez',
+    username: 'maurirlz',
+    name: 'Mauricio',
     password: 'toor',
-  }
+  },
 ];
 
 const getUsersInDatabase = async () => {

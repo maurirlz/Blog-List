@@ -1,7 +1,7 @@
 const blogRouter = require('express').Router();
+const jwt = require('jsonwebtoken');
 const Blog = require('../models/blog');
 const User = require('../models/user');
-const logger = require('../utils/logger');
 
 // get all blogs
 
@@ -13,7 +13,11 @@ blogRouter.get('/', async (request, response) => {
 // get a blog by id
 
 blogRouter.get('/:id', async (request, response, next) => {
-  const blog = await Blog.findById(request.params.id);
+  const blog = await Blog.findById(request.params.id).populate('user', {
+    username: 1,
+    name: 1,
+    id: 1,
+  });
 
   if (blog) {
     response.json(blog.toJSON());
@@ -26,9 +30,13 @@ blogRouter.get('/:id', async (request, response, next) => {
 
 // eslint-disable-next-line consistent-return
 blogRouter.post('/', async (request, response, next) => {
-  const body = request.body;
-
+  const { token, body } = request;
+  const verifyToken = jwt.verify(token, process.env.SECRET);
   const foundUser = await User.findById(body.user);
+
+  if (!token || !verifyToken) {
+    response.status(403);
+  }
 
   if (!body || !body.title || !body.author || !body.url) {
     return response.status(400).json({ error: 'Malformatted blog' });
@@ -51,7 +59,24 @@ blogRouter.post('/', async (request, response, next) => {
 // delete a note
 
 blogRouter.delete('/:id', async (request, response, next) => {
-  await Blog.findByIdAndRemove(request.params.id);
+  const { token } = request;
+  const blogId = request.params.id;
+  const blog = await Blog.findById(blogId);
+
+  if (!blog) {
+    return response.status(204).end();
+  }
+
+  const blogUser = blog.user.toString();
+  const decodedToken = jwt.decode(token, process.env.SECRET);
+
+  if (!token || decodedToken.id.toString() !== blogUser) {
+    return response.status(403).json({
+      error: 'Bad credentials.',
+    });
+  }
+
+  await Blog.findByIdAndRemove(blogId);
   response.status(204).end();
 });
 
