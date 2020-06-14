@@ -3,6 +3,7 @@ const userRouter = require('express').Router();
 const bcrypt = require('bcrypt');
 // eslint-disable-next-line new-cap,no-new-require
 const User = require('../models/user');
+// eslint-disable-next-line no-unused-vars
 const logger = require('../utils/logger');
 
 userRouter.get('/', async (request, response) => {

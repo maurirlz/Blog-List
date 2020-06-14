@@ -49,6 +49,7 @@ describe('Searching an specific attribute for blogs', () => {
 
     expect(titles).toContain('HTML is not easy');
   });
+
   test('it exist a property named id in the database.', async () => {
     const blogs = await helper.queryAllBlogs();
 
@@ -117,7 +118,6 @@ describe('Adding a blog to the database', () => {
 
     const { token } = postUser.body;
     const user = jwt.verify(token, process.env.SECRET);
-
     const newBlog = {
       title: 'Likes defaulting to 0',
       author: 'Benizio Mauritez',
@@ -182,7 +182,6 @@ describe(' Querying the database ', () => {
     expect(blogsAfterDelete).toHaveLength(initialBlogs.length - 1);
 
     const titles = blogsAfterDelete.map((blog) => blog.title);
-
     expect(titles).not.toContain(blogToDelete.title);
   });
 });
@@ -210,7 +209,6 @@ describe('User Integration with blogs', () => {
     const addedBlogId = blogs.find((blog) => blog.title === 'Test blog').id;
     const testUser = await User.findById(`${user.id}`);
     const testUserBlogs = testUser.blogs;
-
     const foundBlog = testUserBlogs.find((blog) => blog.toString() === addedBlogId.toString());
 
     expect(foundBlog).toBeDefined();

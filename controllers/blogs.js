@@ -31,12 +31,13 @@ blogRouter.get('/:id', async (request, response, next) => {
 // eslint-disable-next-line consistent-return
 blogRouter.post('/', async (request, response, next) => {
   const { token, body } = request;
-  const verifyToken = jwt.verify(token, process.env.SECRET);
-  const foundUser = await User.findById(body.user);
+  const decodedToken = jwt.verify(token, process.env.SECRET);
 
-  if (!token || !verifyToken) {
+  if (!token || !decodedToken) {
     response.status(403);
   }
+
+  const foundUser = await User.findById(decodedToken.id);
 
   if (!body || !body.title || !body.author || !body.url) {
     return response.status(400).json({ error: 'Malformatted blog' });
@@ -47,11 +48,11 @@ blogRouter.post('/', async (request, response, next) => {
     author: body.author,
     url: body.url,
     likes: body.likes || 0,
-    user: foundUser._id,
+    user: foundUser.id,
   });
 
   const savedBlog = await newBlog.save();
-  foundUser.blogs = foundUser.blogs.concat(savedBlog._id);
+  foundUser.blogs = foundUser.blogs.concat(savedBlog.id);
   await foundUser.save();
   response.json(savedBlog.toJSON());
 });
