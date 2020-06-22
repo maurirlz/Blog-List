@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const uniqueValidator = require('mongoose-unique-validator');
+const User = require('./user');
 
 mongoose.set('useFindAndModify', false);
 mongoose.set('useCreateIndex', true);
