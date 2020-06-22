@@ -50,7 +50,7 @@ blogRouter.post('/', async (request, response, next) => {
     author: body.author,
     url: body.url,
     likes: body.likes || 0,
-    user: foundUser.id,
+    user: foundUser,
   });
 
   const savedBlog = await newBlog.save();
@@ -79,8 +79,9 @@ blogRouter.delete('/:id', async (request, response, next) => {
     });
   }
 
-  await Blog.findByIdAndRemove(blogId);
-  response.status(204).end();
+  await Blog.findOneAndRemove(blogId);
+
+  return response.status(204).end();
 });
 
 // eslint-disable-next-line consistent-return
@@ -99,7 +100,7 @@ blogRouter.put('/:id', async (request, response, next) => {
   if (!updatedBlog) {
     return response.status(404).end();
   }
-
+  logger.info(updatedBlog);
   response.json(updatedBlog.toJSON()).status(201).end();
 });
 
