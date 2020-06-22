@@ -1,5 +1,7 @@
 const blogRouter = require('express').Router();
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
+const logger = require('../utils/logger');
 const Blog = require('../models/blog');
 const User = require('../models/user');
 
@@ -79,6 +81,26 @@ blogRouter.delete('/:id', async (request, response, next) => {
 
   await Blog.findByIdAndRemove(blogId);
   response.status(204).end();
+});
+
+// eslint-disable-next-line consistent-return
+blogRouter.put('/:id', async (request, response, next) => {
+  const blogId = request.params.id;
+  const { body } = request;
+
+  const requestBlog = {
+    ...body,
+    user: mongoose.Types.ObjectId(body.user.id),
+  };
+
+  const updatedBlog = await Blog.findByIdAndUpdate(blogId, requestBlog, {
+    new: true,
+  });
+  if (!updatedBlog) {
+    return response.status(404).end();
+  }
+
+  response.json(updatedBlog.toJSON()).status(201).end();
 });
 
 module.exports = blogRouter;
